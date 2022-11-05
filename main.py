@@ -1,105 +1,64 @@
-import os
-import random
-
+import ObjectClass
 import cv2
 import cvzone
 from cvzone.FaceMeshModule import FaceMeshDetector
-
-# Game Parameters
-width = 1280
-height = 720
-openThreshold = 65
-eatThreshold = 70
-
-debug = False
-
-# import images
-folderFruits = 'Objects/eatable/'
-folderNonEatable = 'Objects/non_eatable/'
-
-listFruits = os.listdir(folderFruits)
-fruits = []
-for obj in listFruits:
-    fruits.append(cv2.imread(f'{folderFruits}/{obj}', cv2.IMREAD_UNCHANGED))
-
-listNonEatable = os.listdir(folderNonEatable)
-nonEatable = []
-for obj in listNonEatable:
-    nonEatable.append(cv2.imread(f'{folderNonEatable}/{obj}', cv2.IMREAD_UNCHANGED))
+from GameClass import Game
+from GameParameters import *
 
 # Initialize Camera
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(camera)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-detector = FaceMeshDetector(maxFaces=1)
+detector = FaceMeshDetector(maxFaces=maxFaces)
 
-idList = [0, 17, 78, 292]
+# Initialize Game
+game = Game()
 
-currentObject = fruits[0]
-position = [300, 0]
-score = 0
-lives = 3
-speed = 5
+# Initialize Object
+game_object = ObjectClass.Object()
 
-global isEatable
-
-
-def reset_object():
-    global isEatable
-    fruit_or_non_eatable = random.randint(0, 1)
-    if fruit_or_non_eatable == 0:
-        isEatable = True
-        current_object = fruits[random.randint(0, len(fruits) - 1)]
-    else:
-        isEatable = False
-        current_object = nonEatable[random.randint(0, len(nonEatable) - 1)]
-    position[0] = random.randint(100, 1180)
-    position[1] = 0
-    return current_object
-
-
-def init_game():
-    global currentObject, position, score, lives
-    currentObject = reset_object()
-    score = 0
-    lives = 3
-
-
-init_game()
 while True:
     success, img = cap.read()
     img, faces = detector.findFaceMesh(img, draw=False)
 
-    img = cvzone.overlayPNG(img, currentObject, position)
+    img = cvzone.overlayPNG(img, game_object.get_object(), game_object.get_position())
 
-    position[1] += speed
-    if position[1] > height - 100 - 50:
-        currentObject = reset_object()
+    game_object.new_position(game.get_speed())
+
+    if game_object.get_position()[1] > height - objectHeight:
+        currentObject = game_object.new_object()
 
     if faces:
         face = faces[0]
-        if debug:
+        if debug_mode:
             for idNo, point in enumerate(face):
                 cv2.putText(img, str(idNo), point, cv2.FONT_HERSHEY_PLAIN, 0.67, (255, 0, 123), 1)
 
-        if debug:
-            for point_id in idList:
+        if debug_mode:
+            for point_id in id_List_for_lips:
                 cv2.circle(img, face[point_id], 5, (255, 0, 123), 5)
-            cv2.line(img, face[idList[0]], face[idList[1]], (255, 0, 123), 3)
-            cv2.line(img, face[idList[2]], face[idList[3]], (255, 0, 123), 3)
+            cv2.line(img, face[id_List_for_lips[0]], face[id_List_for_lips[1]],
+                     (255, 0, 123), 3)
+            cv2.line(img, face[id_List_for_lips[2]], face[id_List_for_lips[3]],
+                     (255, 0, 123), 3)
 
-        upDown, _ = detector.findDistance(face[idList[0]], face[idList[1]])
-        leftRight, _ = detector.findDistance(face[idList[2]], face[idList[3]])
+        upDown, _ = detector.findDistance(face[id_List_for_lips[0]],
+                                          face[id_List_for_lips[1]])
+        leftRight, _ = detector.findDistance(face[id_List_for_lips[2]],
+                                             face[id_List_for_lips[3]])
         # Distance between mouth and object
-        cx, cy = (face[idList[0]][0] + face[idList[1]][0]) // 2, (face[idList[0]][1] + face[idList[1]][1]) // 2
-        if debug:
-            cv2.line(img, (cx, cy), (position[0] + 50, position[1] + 50), (0, 255, 123), 3)
+        cx, cy = (face[id_List_for_lips[0]][0] + face[id_List_for_lips[1]][0]) // 2, (
+                face[id_List_for_lips[0]][1] + face[id_List_for_lips[1]][1]) // 2
+        if debug_mode:
+            cv2.line(img, (cx, cy), (game_object.get_position()[0] + 50, game_object.get_position()[1] + 50),
+                     (0, 255, 123), 3)
 
-        mouth_distance = detector.findDistance((cx, cy), (position[0] + 50, position[1] + 50))[0]
+        mouth_distance = \
+        detector.findDistance((cx, cy), (game_object.get_position()[0] + 50, game_object.get_position()[1] + 50))[0]
 
         # open/close mouth
         ratio = int((upDown / leftRight) * 100)
-        if debug:
+        if debug_mode:
             print("Mouth Ratio: ", ratio)
             if ratio > openThreshold:
                 cv2.putText(img, "OPEN", (50, 50), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
@@ -108,22 +67,22 @@ while True:
 
         if mouth_distance < eatThreshold:
             if ratio > openThreshold:
-                currentObject = reset_object()
-                if isEatable:
-                    score += 1
+                if game_object.get_is_eatable():
+                    game.increase_score()
                 else:
-                    lives -= 1
+                    game.decrease_lives()
 
-                if score % 5 == 0 and score != 0:
-                    lives += 1
+                if game.get_score() % 5 == 0 and game.get_score() != 0:
+                    game.increase_lives()
+                currentObject = game_object.new_object()
 
-        if lives == 0:
-            init_game()
+        if game.get_lives() == 0:
+            game.reset()
 
     img = cv2.flip(img, 1)
 
-    cv2.putText(img, f'Score: {score}', (1000, 100), cv2.FONT_HERSHEY_PLAIN, 3, (255, 128, 128), 3)
-    cv2.putText(img, f'Lives: {lives}', (1000, 150), cv2.FONT_HERSHEY_PLAIN, 3, (255, 128, 128), 3)
+    cv2.putText(img, f'Score: {game.get_score()}', (1000, 100), cv2.FONT_HERSHEY_PLAIN, 3, (255, 128, 128), 3)
+    cv2.putText(img, f'Lives: {game.get_lives()}', (1000, 150), cv2.FONT_HERSHEY_PLAIN, 3, (255, 128, 128), 3)
 
-    cv2.imshow("Image", img)
+    cv2.imshow("made by Ilias Baferos", img)
     cv2.waitKey(1)
