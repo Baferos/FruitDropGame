@@ -41,4 +41,4 @@ DefaultCamera = 0
 face = 0
 
 # Debug mode
-debug_mode = False
+debug_mode = False   # True or False

@@ -1,6 +1,6 @@
 import cv2
 from EatableNonEatableClass import EatableNonEatable
-from GameClass import Game
+from GameRulesClass import GameRules
 from cvzone.FaceMeshModule import FaceMeshDetector
 from GameParameters import *
 import cvzone
@@ -10,20 +10,27 @@ class Frames(object):
     camera = cv2.VideoCapture(0)
 
     def __init__(self, frame_width, frame_height):
-        self.face = None
-        self.faces = None
+
         self.camera = cv2.VideoCapture(DefaultCamera)
         self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
         self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
         self.detector = FaceMeshDetector(maxFaces=maxFaces)
         self.success, self.img = self.camera.read()
+        self.faces = None
+        self.face = None
+
         # Initialize Game
-        self.game_rules = Game()
+        self.game_rules = GameRules()
         # Initialize eatable or non-eatable object
         self.eatable_non_eatable = EatableNonEatable()
 
     def update_frame(self):
         self.success, self.img = self.camera.read()
+
+    def get_face(self):
+        self.img, self.faces = self.detector.findFaceMesh(self.img,  draw=True if debug_mode else False)
+        if self.faces:
+            self.face = self.faces[0]
 
     def print_score_lives(self):
         cv2.putText(self.img, f'Score: {self.game_rules.get_score()}', (1000, 100), cv2.FONT_HERSHEY_PLAIN, 3,
@@ -73,17 +80,12 @@ class Frames(object):
         if self.is_object_near_the_mouth() and self.is_mouth_open():
             if self.eatable_non_eatable.get_is_eatable():
                 self.game_rules.increase_score()
+                if self.game_rules.get_score() % lifeIncEvery == 0 and self.game_rules.get_score() != 0:
+                    self.game_rules.increase_lives()
             else:
                 self.game_rules.decrease_lives()
 
-            if self.game_rules.get_score() % lifeIncEvery == 0 and self.game_rules.get_score() != 0:
-                self.game_rules.increase_lives()
             self.eatable_non_eatable.new_object()
-
-    def get_face(self, draw=False):
-        self.img, self.faces = self.detector.findFaceMesh(self.img, draw=draw)
-        if self.faces is not None:
-            self.face = self.faces[0]
 
     def game_loop(self):
         while True:

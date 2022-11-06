@@ -1,7 +1,7 @@
 from GameParameters import startingLives, startSpeed
 
 
-class Game:
+class GameRules:
 
     def __init__(self):
         self.score = 0
