@@ -2,10 +2,11 @@ from GameParameters import startingLives, startSpeed
 
 
 class Game:
-    score, lives, speed = 0, 0, 0
 
-    def __int__(self):
-        self.reset()
+    def __init__(self):
+        self.score = 0
+        self.lives = startingLives
+        self.speed = startSpeed
 
     def get_score(self):
         return self.score
@@ -41,3 +42,7 @@ class Game:
         self.score = 0
         self.lives = startingLives
         self.speed = startSpeed
+
+    def check_if_game_over(self):
+        return self.lives <= 0
+

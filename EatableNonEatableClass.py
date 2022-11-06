@@ -8,8 +8,8 @@ from GameParameters import width, objectWidth
 folderFruits = 'Objects/eatable/'
 folderNonEatable = 'Objects/non_eatable/'
 
-class Object:
 
+class EatableNonEatable:
     is_eatable = False
     current_object = ''
     listFruits = os.listdir(folderFruits)
@@ -53,9 +53,3 @@ class Object:
             self.current_object = self.nonEatable[random.randint(0, len(self.nonEatable) - 1)]
 
         self.position = [random.randint(objectWidth, (width - objectWidth)), 0]
-
-
-
-
-
-
