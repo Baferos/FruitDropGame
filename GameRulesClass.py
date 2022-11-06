@@ -32,6 +32,9 @@ class GameRules:
     def increase_score(self):
         self.score += 1
 
+    def increase_speed(self):
+        self.speed += 1
+
     def increase_lives(self):
         self.lives += 1
 

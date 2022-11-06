@@ -81,11 +81,13 @@ class Frames(object):
             if self.eatable_non_eatable.get_is_eatable():
                 self.game_rules.increase_score()
                 if self.game_rules.get_score() % lifeIncEvery == 0 and self.game_rules.get_score() != 0:
+                    self.game_rules.increase_speed()
                     self.game_rules.increase_lives()
             else:
                 self.game_rules.decrease_lives()
 
             self.eatable_non_eatable.new_object()
+
 
     def game_loop(self):
         while True:
@@ -94,7 +96,7 @@ class Frames(object):
             if not self.game_rules.check_if_game_over():
                 self.img = cvzone.overlayPNG(self.img, self.eatable_non_eatable.get_object(),
                                              self.eatable_non_eatable.get_position())
-                self.eatable_non_eatable.new_position(startSpeed)
+                self.eatable_non_eatable.new_position(self.game_rules.get_speed())
                 # Reset eatable or non-eatable object if it is out of the frame
                 if self.eatable_non_eatable.get_position()[1] > height - objectHeight:
                     self.eatable_non_eatable.new_object()
@@ -114,6 +116,7 @@ class Frames(object):
             # show the frame
             cv2.imshow(title, self.img)
 
+            print("speed: ", self.game_rules.get_speed())
             # wait for a key press
             key = cv2.waitKey(1)
 
