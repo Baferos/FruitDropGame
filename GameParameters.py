@@ -1,5 +1,8 @@
 # Game Parameters
 
+# Title
+title = "made by Ilias Baferos"
+
 # Screen size
 width = 1280
 height = 720
@@ -13,6 +16,9 @@ startSpeed = 5
 
 # Starting lives
 startingLives = 3
+
+# Life increase every n points
+lifeIncEvery = 5
 
 # Path to images
 folderFruits = 'Objects/eatable/'
@@ -36,5 +42,5 @@ face = 0
 
 
 # Debug mode
-debug_mode = False
+debug_mode = True
 
