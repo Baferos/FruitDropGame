@@ -116,7 +116,6 @@ class Frames(object):
             # show the frame
             cv2.imshow(title, self.img)
 
-            print("speed: ", self.game_rules.get_speed())
             # wait for a key press
             key = cv2.waitKey(1)
 
